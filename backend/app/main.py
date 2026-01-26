@@ -1,0 +1,79 @@
+from fastapi import FastAPI, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+from fastapi.security import OAuth2PasswordRequestForm
+
+# Import all your modules
+from . import models, schemas, crud, database, auth
+
+app = FastAPI()
+
+# Create the database tables
+models.Base.metadata.create_all(bind=database.engine)
+
+
+# Dependency to get DB session
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Hostel Hygiene API is running!"}
+
+
+# --- AUTHENTICATION ENDPOINTS ---
+
+
+@app.post("/users/", response_model=schemas.UserResponse)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Check if user already exists
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return crud.create_user(db=db, user=user)
+
+
+@app.post("/login", response_model=schemas.Token)
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+):
+    # Authenticate the user
+    user = (
+        db.query(models.User).filter(models.User.username == form_data.username).first()
+    )
+
+    if not user or not auth.verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Generate the JWT Token
+    access_token = auth.create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+# --- ISSUE ENDPOINTS ---
+
+
+@app.post("/issues/", response_model=schemas.IssueResponse)
+def create_issue(
+    issue: schemas.IssueCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),  # PROTECTED ROUTE
+):
+    # We pass the current_user.id to the crud function so we know who posted it
+    return crud.create_issue(db=db, issue=issue, user_id=current_user.id)
+
+
+@app.get("/issues/", response_model=List[schemas.IssueResponse])
+def read_issues(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    # Public route (anyone can see issues for now)
+    issues = crud.get_issues(db, skip=skip, limit=limit)
+    return issues
