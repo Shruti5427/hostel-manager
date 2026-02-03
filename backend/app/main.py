@@ -5,8 +5,24 @@ from fastapi.security import OAuth2PasswordRequestForm
 from . import models, schemas, crud, database, auth
 from fastapi import File, UploadFile, Form
 from . import utils
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+
+origins = [
+    "http://localhost:5173",  # The address of your React App
+    "http://127.0.0.1:5173",
+]
+
+"""this middleware enables CORS for the specified origins."""
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers (Authentication, etc.)
+)
 
 # Create the database tables
 models.Base.metadata.create_all(bind=database.engine)

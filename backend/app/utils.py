@@ -1,23 +1,26 @@
+import os
 import cloudinary
 import cloudinary.uploader
+from dotenv import load_dotenv
 
+load_dotenv()  # This reads your new .env file
 # Configuration
 cloudinary.config(
-    cloud_name="do8zgj6w5",
-    api_key="269446728361577",
-    api_secret="xbCj788OBC0xgSvvldnN4cqa6xY",
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
     secure=True,
 )
 
 
 def upload_image(file_object):
     """
-    Takes a file object, uploads it to Cloudinary, 
+    Takes a file object, uploads it to Cloudinary,
     and returns the secure URL string.
     """
     if not file_object:
         return None
-    
+
     try:
         # Upload the file directly
         response = cloudinary.uploader.upload(file_object.file)
