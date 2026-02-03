@@ -2,9 +2,9 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.security import OAuth2PasswordRequestForm
-
-# Import all your modules
 from . import models, schemas, crud, database, auth
+from fastapi import File, UploadFile, Form
+from . import utils
 
 app = FastAPI()
 
@@ -62,14 +62,14 @@ def login_for_access_token(
 # --- ISSUE ENDPOINTS ---
 
 
-@app.post("/issues/", response_model=schemas.IssueResponse)
-def create_issue(
-    issue: schemas.IssueCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user),  # PROTECTED ROUTE
-):
-    # We pass the current_user.id to the crud function so we know who posted it
-    return crud.create_issue(db=db, issue=issue, user_id=current_user.id)
+# @app.post("/issues/", response_model=schemas.IssueResponse)
+# def create_issue(
+#     issue: schemas.IssueCreate,
+#     db: Session = Depends(get_db),
+#     current_user: models.User = Depends(auth.get_current_user),  # PROTECTED ROUTE
+# ):
+#     # We pass the current_user.id to the crud function so we know who posted it
+#     return crud.create_issue(db=db, issue=issue, user_id=current_user.id)
 
 
 @app.get("/issues/", response_model=List[schemas.IssueResponse])
@@ -77,3 +77,51 @@ def read_issues(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     # Public route (anyone can see issues for now)
     issues = crud.get_issues(db, skip=skip, limit=limit)
     return issues
+
+
+# @app.post("/issues/", response_model=schemas.IssueResponse)
+# def create_issue(
+#     title: str = Form(...),
+#     description: str = Form(...),
+#     wing: str = Form(...),
+#     file: UploadFile = File(None),  # Optional file
+#     db: Session = Depends(get_db),
+#     current_user: models.User = Depends(auth.get_current_user),
+# ):
+#     # 1. Upload image if it exists
+#     image_url = None
+#     if file:
+#         image_url = utils.upload_image(file)
+
+#     # 2. Create the schema manually from Form data
+#     issue_data = schemas.IssueCreate(
+#         title=title, description=description, wing=wing, image_url=image_url
+#     )
+
+
+#     # 3. Save to DB
+#     return crud.create_issue(db=db, issue=issue_data, user_id=current_user.id)
+"""Create an issue with optional image upload."""
+
+
+@app.post("/issues/", response_model=schemas.IssueResponse)
+def create_issue(
+    title: str = Form(...),
+    description: str = Form(...),
+    wing: str = Form(...),
+    file: UploadFile = File(None),  # This handles the image
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    # 1. Upload image if it exists
+    image_url = None
+    if file:
+        image_url = utils.upload_image(file)
+
+    # 2. Bundle data into a Schema
+    issue_data = schemas.IssueCreate(
+        title=title, description=description, wing=wing, image_url=image_url
+    )
+
+    # 3. Save to Database
+    return crud.create_issue(db=db, issue=issue_data, user_id=current_user.id)
