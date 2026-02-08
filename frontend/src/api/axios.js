@@ -2,8 +2,9 @@ import axios from 'axios';
 
 // Create an axios instance
 const api = axios.create({
-    baseURL: 'http://127.0.0.1:8000', // This points to your FastAPI backend
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000",
 });
+
 
 // Interceptor: Before every request, check if we have a token
 api.interceptors.request.use(
