@@ -6,6 +6,7 @@ from . import models, schemas, crud, database, auth
 from fastapi import File, UploadFile, Form
 from . import utils
 from fastapi.middleware.cors import CORSMiddleware
+from .auth import get_current_user
 
 app = FastAPI()
 
@@ -41,6 +42,9 @@ def get_db():
 def read_root():
     return {"message": "Hostel Hygiene API is running!"}
 
+@app.get("/users/me", response_model=schemas.UserResponse)
+def read_users_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
 
 # --- AUTHENTICATION ENDPOINTS ---
 
@@ -141,3 +145,33 @@ def create_issue(
 
     # 3. Save to Database
     return crud.create_issue(db=db, issue=issue_data, user_id=current_user.id)
+
+
+# ... previous code ...
+
+""" Resolve an issue (Warden only)."""
+
+
+@app.put("/issues/{issue_id}/resolve")
+def resolve_issue(
+    issue_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    # 1. Check if the user is a Warden
+    if current_user.role != "warden":
+        raise HTTPException(status_code=403, detail="Only Wardens can resolve issues")
+
+    # 2. Find the issue
+    issue = db.query(models.Issue).filter(models.Issue.id == issue_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    # 3. Update the status
+    issue.status = "Resolved"
+    db.commit()
+
+    return {"message": "Issue resolved successfully", "status": "Resolved"}
+
+
+

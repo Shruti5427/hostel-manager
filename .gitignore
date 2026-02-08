@@ -4,3 +4,9 @@ venv/
 .env
 .DS_Store
 *.db
+# Python / backend
+backend/venv/
+backend/*.db
+backend/__pycache__/
+# Node / frontend
+frontend/node_modules/  

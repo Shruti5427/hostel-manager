@@ -34,10 +34,12 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    role: str = "student"
 
 
 class UserResponse(UserBase):
     id: int
+    role: str
     is_warden: bool
 
     class Config:

@@ -8,7 +8,7 @@ load_dotenv() # Load environment variables
 
 # For local dev, you can use a local Postgres URL. 
 # Format: postgresql://user:password@localhost/dbname
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db") 
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./hostel.db") 
 
 # NOTE: I put SQLite as default above so you can run this IMMEDIATELY without 
 # installing Postgres right this second. Switch to Postgres URL when ready.

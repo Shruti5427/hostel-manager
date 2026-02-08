@@ -11,7 +11,9 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    is_warden = Column(Boolean, default=False)  # True = Admin/Warden, False = Student
+    is_warden = Column(Boolean, default=False)
+    # role: str = "student"
+    role = Column(String, default="student")  # True = Admin/Warden, False = Student
 
     # Relationship: A user can report many issues
     issues = relationship("Issue", back_populates="reporter")
