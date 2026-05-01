@@ -34,7 +34,10 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role: str = "student"
+
+    class Config:
+        # Public signup: don't allow clients to set role / other unexpected fields
+        extra = "forbid"
 
 
 class UserResponse(UserBase):

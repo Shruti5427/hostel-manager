@@ -31,13 +31,12 @@ def get_user_by_email(db: Session, email: str):
 
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = get_password_hash(user.password)
-    is_warden = user.role.strip().lower() == "warden"
     db_user = models.User(
         username=user.username,
         email=user.email,
         hashed_password=hashed_password,
-        role=user.role,
-        is_warden=is_warden,
+        role="student",
+        is_warden=False,
     )
     db.add(db_user)
     db.commit()
